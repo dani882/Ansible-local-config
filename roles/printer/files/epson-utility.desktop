@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Categories=Application;Printing;
+
+Name=Epson Printer Utility
+
+Exec=epson-printer-utility
+Terminal=false
+Icon=/opt/epson-printer-utility/resource/Images/AppIcon.png

@@ -1,0 +1,17 @@
+---
+- name: Install FortiClient SSL-VPN
+  apt:
+    deb: "https://hadler.me/files/forticlient-sslvpn_4.4.2333-1_amd64.deb"
+    state: present
+  become: true
+
+#################################
+######TigerVNC installation######
+#################################
+
+- name: Install TigerVNC server
+  become: yes
+  apt:
+    name: ['tigervnc-standalone-server', 'tigervnc-common', 'tigervnc-scraping-server']
+    state: present
+

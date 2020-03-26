@@ -1,0 +1,13 @@
+---
+- hosts: all
+  vars:
+    virtualbox_version: "6.1.0"
+    terraform_version: "0.12.18"
+    epson_generic_driver_url: "https://download3.ebz.epson.net/dsc/f/03/00/10/33/90/b723a03d5b741379581328186729101b40ad824c/epson-inkjet-printer-escpr_1.7.6-1lsb3.2_amd64.deb"
+    epson_printer_utility_driver_url: "https://download3.ebz.epson.net/dsc/f/03/00/10/33/92/4ee7647949534e45a397cf2e75b97b5d23b117df/epson-printer-utility_1.1.0-1lsb3.2_amd64.deb"
+    epson_scanner_driver_url: "https://download2.ebz.epson.net/imagescanv3/ubuntu/latest2/deb/x64/imagescan-bundle-ubuntu-19.04-3.61.0.x64.deb.tar.gz"
+  
+  roles:
+    - common
+    - printer
+    - firstam

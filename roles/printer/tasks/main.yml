@@ -1,0 +1,42 @@
+---
+- name: Install LSB package module and gtk-canberra package beforehand
+  apt:
+    name: ['lsb', 'libcanberra-gtk-module']
+    state: present
+  become: true
+
+- name: Install Epson Generic drivers & Utility package
+  apt:
+    deb: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ epson_generic_driver_url }}"
+    - "{{ epson_printer_utility_driver_url }}"
+  become: true
+
+- name: Uncompress Epson Scanner Driver file
+  unarchive:
+    src: "{{ epson_scanner_driver_url }}"
+    dest: /tmp
+    list_files: yes
+    remote_src: yes
+  register: directory_name
+
+- name: Install epson scanner drivers
+  shell: "./install.sh"
+  args:
+      chdir: "/tmp/{{ directory_name.files[0] }}" 
+  become: true
+
+- name: Create Epson Utility launcher for Ubuntu
+  copy:
+    src: "../files/epson-utility.desktop"
+    dest: "/usr/share/applications/epson-utility.desktop"
+    mode: +x
+  become: true
+
+- name: Grant permission for /opt/epson-printer-utility/resource/Images directory
+  file:
+    path: "/opt/epson-printer-utility/resource/Images"
+    mode: '0755'
+  become: true

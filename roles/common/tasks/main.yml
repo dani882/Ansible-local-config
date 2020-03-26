@@ -1,0 +1,134 @@
+---
+- name: Install commom packages
+  become: yes
+  apt:
+    name: ['default-jdk', 'unrar', 'unzip', 'flameshot', 'libpulse-dev', 'libavcodec-dev', 
+    'libxv-dev', 'xterm', 'dkms', 'terminator', 'powertop', 'tlp', 'build-essential', 'htop',
+    'p7zip', 'python3-pip']
+    state: present
+    update_cache: yes
+
+- name: Install skype for linux
+  become: yes
+  apt:
+    deb: "https://repo.skype.com/latest/skypeforlinux-64.deb"
+    state: present
+
+- name: Install Google Chrome
+  become: yes
+  apt:
+    deb: "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    state: present
+
+#################################
+######Remmina installation#######
+#################################
+
+- name: Add Remmina repository
+  become: yes
+  apt_repository:
+    repo: ppa:remmina-ppa-team/remmina-next
+    state: present
+
+- name: Install Remmina and plugins
+  become: yes
+  apt:
+    name: ['remmina', 'remmina-plugin-rdp', 'remmina-plugin-secret']
+    state: present
+
+#################################
+#Visual Studio Code installation#
+#################################
+
+- name: Install Visual studio code dependencies
+  become: yes
+  apt:
+    name: ['ca-certificates','apt-transport-https', 'gconf2', 'libasound2', 'libgtk2.0-0', 'libxss1']
+    state: present
+
+- name: Add Microsoft signing key
+  become: yes
+  apt_key:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    state: present
+
+- name: Add VS Code repo
+  become: yes
+  apt_repository:
+    repo: "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
+    filename: vscode
+    state: present
+
+- name: Install Visual Studio Code
+  become: yes
+  apt: pkg=code state=present update_cache=yes
+
+#################################
+####Virtualbox installation######
+#################################
+
+- name: Configure Oracle key
+  become: yes
+  apt_key: url={{ item }}
+          state=present
+  with_items:
+  - "https://www.virtualbox.org/download/oracle_vbox.asc"
+  - "https://www.virtualbox.org/download/oracle_vbox_2016.asc"
+
+- name: Configure VirtualBox repositories
+  become: yes
+  apt_repository: repo="deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian {{ ansible_distribution_release }} contrib"
+                state=present
+
+- name: Install VirtualBox
+  become: yes
+  apt: pkg=virtualbox-{{ virtualbox_version[:3] }} state=present update_cache=yes
+
+- name: Download Virtualbox Extension Pack
+  get_url:
+    url: https://download.virtualbox.org/virtualbox/{{ virtualbox_version }}/Oracle_VM_VirtualBox_Extension_Pack-{{ virtualbox_version }}.vbox-extpack
+    dest: "{{ ansible_user_dir }}"
+
+- name: Install VirtualBox Extension Pack
+  shell: "echo y | VBoxManage extpack install --replace {{ ansible_user_dir }}/Oracle_VM_VirtualBox_Extension_Pack-{{ virtualbox_version }}.vbox-extpack"
+  become: true
+
+- name: Remove temporary files
+  shell: "VBoxManage extpack cleanup"
+  become: true
+
+#################################
+#######AWS Cli installation######
+#################################
+
+- name: Install AWS Cli
+  pip:
+    name: awscli
+
+#################################
+#####Terraform installation######
+#################################
+
+- name: Install terraform
+  unarchive:
+    src: https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip
+    dest: /usr/local/bin
+    remote_src: yes
+  become: true
+
+
+#################################
+#Minikube & kubectl installation#
+#################################
+
+- name: Install terraform
+  unarchive:
+    src: curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
+  && chmod +x minikube
+    dest: /usr/local/bin
+    remote_src: yes
+  become: true
+
+  #Power consumption
+  #sudo powertop --calibrate --auto-tune --quiet
+  #sudo tlp start
