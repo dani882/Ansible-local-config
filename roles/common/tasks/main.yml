@@ -1,67 +1,66 @@
 ---
+
+- name: Upgrade all apt packages
+  become: yes
+  apt: update_cache=yes upgrade=dist
+  ignore_errors: yes
+
 - name: Install commom packages
   become: yes
   apt:
-    name: ['default-jdk', 'unrar', 'unzip', 'flameshot', 'libpulse-dev', 'libavcodec-dev', 
-    'libxv-dev', 'xterm', 'dkms', 'terminator', 'powertop', 'tlp', 'build-essential', 'htop',
-    'p7zip', 'python3-pip']
-    state: present
-    update_cache: yes
+    name: ['default-jdk', 'unrar', 'unzip', 'flameshot', 'telegram-desktop', 'dkms', 'terminator',
+    'powertop', 'tlp', 'build-essential', 'htop', 'p7zip', 'jq', 'python3-pip', 'apt-transport-https',
+    'ca-certificates', 'curl', 'gnupg-agent', 'software-properties-common']
+
+- name: Install kvm/libvirt
+  become: yes
+  apt:
+    name: ['qemu', 'qemu-kvm', 'libvirt-daemon-system', 'libvirt-clients', 'bridge-utils']
+
+- name: Install vagrant & libvirt provider
+  become: yes
+  apt:
+    name: ['vagrant', 'vagrant-libvirt', 'ebtables', 'dnsmasq-base', 'libvirt-dev', 'zlib1g-dev', 'ruby-dev',
+    'libxml2-dev', 'libxslt-dev']
 
 - name: Install skype for linux
   become: yes
   apt:
     deb: "https://repo.skype.com/latest/skypeforlinux-64.deb"
-    state: present
+  ignore_errors: yes
 
 - name: Install Google Chrome
   become: yes
   apt:
     deb: "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-    state: present
-
-#################################
-######Remmina installation#######
-#################################
-
-- name: Add Remmina repository
-  become: yes
-  apt_repository:
-    repo: ppa:remmina-ppa-team/remmina-next
-    state: present
-
-- name: Install Remmina and plugins
-  become: yes
-  apt:
-    name: ['remmina', 'remmina-plugin-rdp', 'remmina-plugin-secret']
-    state: present
 
 #################################
 #Visual Studio Code installation#
 #################################
 
-- name: Install Visual studio code dependencies
-  become: yes
-  apt:
-    name: ['ca-certificates','apt-transport-https', 'gconf2', 'libasound2', 'libgtk2.0-0', 'libxss1']
-    state: present
-
-- name: Add Microsoft signing key
-  become: yes
-  apt_key:
-    url: https://packages.microsoft.com/keys/microsoft.asc
-    state: present
-
-- name: Add VS Code repo
-  become: yes
-  apt_repository:
-    repo: "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
-    filename: vscode
-    state: present
-
 - name: Install Visual Studio Code
   become: yes
-  apt: pkg=code state=present update_cache=yes
+  apt:
+    deb: "https://go.microsoft.com/fwlink/?LinkID=760868"
+    
+#################################
+########Kodi installation########
+#################################
+
+- name: Install kodi dependencies
+  become: yes
+  apt:
+    name: software-properties-common
+
+- name: Configure kodi repository
+  become: yes
+  apt_repository: repo="ppa:team-xbmc/ppa" state=present
+
+- name: Install kodi
+  become: yes
+  apt:
+    name: kodi
+    update_cache: yes
 
 #################################
 ####Virtualbox installation######
@@ -101,9 +100,16 @@
 #######AWS Cli installation######
 #################################
 
+- name: Download AWS Cli
+  unarchive:
+    src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: /tmp
+    remote_src: yes
+  become: true
+
 - name: Install AWS Cli
-  pip:
-    name: awscli
+  shell: "/tmp/aws/install --update"
+  become: true
 
 #################################
 #####Terraform installation######
@@ -116,17 +122,57 @@
     remote_src: yes
   become: true
 
+#################################
+########Docker installation######
+#################################
+
+- name: Configure Docker’s official GPG key
+  become: yes
+  apt_key: url="https://download.docker.com/linux/ubuntu/gpg" state=present
+
+- name: Configure docker repository
+  become: yes
+  apt_repository: 
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+
+- name: Install docker engine
+  become: yes
+  apt:
+    name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+    state: present
+
+- name: Install docker compose
+  become: yes
+  get_url:
+    url: https://github.com/docker/compose/releases/download/1.25.5/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: +x
+
+- name: add user "{{ ansible_user }}" to docker group
+  become: yes
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  ignore_errors: yes
 
 #################################
 #Minikube & kubectl installation#
 #################################
 
-- name: Install terraform
-  unarchive:
-    src: curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
-  && chmod +x minikube
+- name: Install kubectl
+  get_url:
+    url: https://storage.googleapis.com/kubernetes-release/release/{{ kubernetes_version }}/bin/linux/amd64/kubectl
     dest: /usr/local/bin
-    remote_src: yes
+    mode: +x
+  become: true
+
+- name: Install minikube & kubectl
+  get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    dest: /usr/local/bin
+    mode: +x
   become: true
 
   #Power consumption

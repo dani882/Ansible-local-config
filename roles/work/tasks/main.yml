@@ -1,0 +1,87 @@
+---
+
+#################################
+##FortiClient VPN installation###
+#################################
+- name: Install FortiClient SSL-VPN
+  apt:
+    deb: "https://hadler.me/files/forticlient-sslvpn_4.4.2333-1_amd64.deb"
+  become: true
+
+#################################
+##Cisco AnyConnect installation##
+#################################
+
+- name: Download Cisco Anyconnect dependencies
+  become: yes
+  apt:
+    name: ['lib32z1', 'lib32ncurses5-dev', 'libpangox-1.0-0']
+
+- name: Download Cisco AnyConnect client
+  unarchive:
+    src: https://uci.service-now.com/sys_attachment.do?sys_id=3e869ef2db082b0054e7f236bf961900
+    dest: /tmp
+    list_files: yes
+    remote_src: yes
+  register: directory_name
+
+- name: Install Cisco AnyConnect client
+  become: yes
+  shell: "echo y | ./vpn_install.sh"
+  args:
+    chdir: "/tmp/{{ directory_name.files[0] }}/vpn/"
+  notify: reload systemd
+  
+#################################
+######TigerVNC installation######
+#################################
+
+- name: Install TigerVNC server
+  become: yes
+  apt:
+    name: ['tigervnc-standalone-server', 'tigervnc-common', 'tigervnc-scraping-server']
+
+#################################
+######Remmina installation#######
+#################################
+
+- name: Add Remmina repository
+  become: yes
+  apt_repository:
+    repo: ppa:remmina-ppa-team/remmina-next
+  ignore_errors: yes
+
+- name: Install Remmina and plugins
+  become: yes
+  apt:
+    name: ['remmina', 'remmina-plugin-rdp', 'remmina-plugin-secret']
+    update_cache: yes
+  ignore_errors: yes
+
+#########################################
+######Microsoft Teams Installation#######
+#########################################
+
+- name: Install Microsoft Teams
+  apt:
+    deb: "https://packages.microsoft.com/repos/ms-teams/pool/main/t/teams/teams_1.3.00.5153_amd64.deb"
+  become: true
+
+- name: install ca package
+  apt:
+      name: ca-certificates
+      update_cache: yes
+  become: true
+
+- name: copy FirstAM certificate authority to trusted ca path
+  become: true
+  copy:
+      src: '{{ item }}'
+      dest: '/usr/local/share/ca-certificates/'
+      owner: root
+      group: root
+      mode: 0644
+  with_fileglob:
+      - "../files/*"
+  notify:
+  - update trusted ca

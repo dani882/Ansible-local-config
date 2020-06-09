@@ -2,13 +2,11 @@
 - name: Install LSB package module and gtk-canberra package beforehand
   apt:
     name: ['lsb', 'libcanberra-gtk-module']
-    state: present
   become: true
 
 - name: Install Epson Generic drivers & Utility package
   apt:
     deb: "{{ item }}"
-    state: present
   with_items:
     - "{{ epson_generic_driver_url }}"
     - "{{ epson_printer_utility_driver_url }}"
