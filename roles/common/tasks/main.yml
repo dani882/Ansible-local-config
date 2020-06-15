@@ -8,7 +8,7 @@
 - name: Install commom packages
   become: yes
   apt:
-    name: ['default-jdk', 'unrar', 'unzip', 'flameshot', 'telegram-desktop', 'dkms', 'terminator',
+    name: ['default-jdk', 'unrar', 'vim', 'unzip', 'flameshot', 'telegram-desktop', 'dkms', 'terminator',
     'powertop', 'tlp', 'build-essential', 'htop', 'p7zip', 'jq', 'python3-pip', 'apt-transport-https',
     'ca-certificates', 'curl', 'gnupg-agent', 'software-properties-common']
 
@@ -92,7 +92,7 @@
   shell: "echo y | VBoxManage extpack install --replace {{ ansible_user_dir }}/Oracle_VM_VirtualBox_Extension_Pack-{{ virtualbox_version }}.vbox-extpack"
   become: true
 
-- name: Remove temporary files
+- name: Remove VirtualBox temporary files
   shell: "VBoxManage extpack cleanup"
   become: true
 
@@ -149,7 +149,7 @@
     dest: /usr/local/bin/docker-compose
     mode: +x
 
-- name: add user "{{ ansible_user }}" to docker group
+- name: add user {{ ansible_user }} to docker group
   become: yes
   user:
     name: "{{ ansible_user }}"
@@ -162,19 +162,23 @@
 #################################
 
 - name: Install kubectl
+  become: yes
   get_url:
     url: https://storage.googleapis.com/kubernetes-release/release/{{ kubernetes_version }}/bin/linux/amd64/kubectl
     dest: /usr/local/bin
     mode: +x
-  become: true
 
-- name: Install minikube & kubectl
+- name: Install minikube
+  become: yes
   get_url:
     url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-    dest: /usr/local/bin
+    dest: /usr/local/bin/minikube
     mode: +x
-  become: true
 
+- name: Make kvm2 the default driver for minikube
+  become: yes
+  shell: "minikube config set driver kvm2"
+  
   #Power consumption
   #sudo powertop --calibrate --auto-tune --quiet
   #sudo tlp start

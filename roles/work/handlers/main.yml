@@ -4,4 +4,5 @@
     daemon_reload: yes
 
 - name: update trusted ca
+  become: yes
   shell: /usr/sbin/update-ca-certificates
