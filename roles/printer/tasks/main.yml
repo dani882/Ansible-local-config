@@ -26,6 +26,42 @@
       chdir: "/tmp/{{ directory_name.files[0] }}" 
   become: true
 
+# Ubuntu 20.04 need qt4 instead of qt5 of print utility work
+- name: Download missing files from qt4
+  get_url:
+    url: "{{ item }}"
+    dest: /tmp
+  with_items:
+  - "http://mirrors.kernel.org/ubuntu/pool/main/q/qt4-x11/libqtcore4_4.8.7+dfsg-5ubuntu2_amd64.deb"
+  - "http://mirrors.kernel.org/ubuntu/pool/main/q/qt4-x11/libqtgui4_4.8.7+dfsg-5ubuntu2_amd64.deb"
+  - "http://security.ubuntu.com/ubuntu/pool/main/libp/libpng/libpng12-0_1.2.54-1ubuntu1.1_amd64.deb"
+
+- name: Create a directory for deb package extraction(if it does not exist)
+  file:
+    path: /etc/output
+    state: directory
+    mode: '0755'
+
+- name: Extract deb package
+  shell: 
+    cmd: dpkg-deb -x "{{ item }}" output
+    chdir: /tmp
+  with_items:
+  - libqtcore4_4.8.7+dfsg-5ubuntu2_amd64.deb
+  - libqtgui4_4.8.7+dfsg-5ubuntu2_amd64.deb
+  - libpng12-0_1.2.54-1ubuntu1.1_amd64.deb
+
+# This is for epson-utility start working again
+- name: Copy the files required to the correct locations
+  copy:
+    src: "{{ item }}"
+    dest: /usr/lib/x86_64-linux-gnu/
+  with_items:
+  - "/tmp/output/usr/lib/x86_64-linux-gnu/libQtCore.so.4"
+  - "/tmp/output/usr/lib/x86_64-linux-gnu/libQtGui.so.4"
+  - "/tmp/output/lib/x86_64-linux-gnu/libpng12.so.0"
+  become: true
+
 - name: Create Epson Utility launcher for Ubuntu
   copy:
     src: "../files/epson-utility.desktop"

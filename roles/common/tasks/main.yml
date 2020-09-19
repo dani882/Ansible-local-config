@@ -115,12 +115,19 @@
 #####Terraform installation######
 #################################
 
-- name: Install terraform
-  unarchive:
-    src: https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip
-    dest: /usr/local/bin
-    remote_src: yes
-  become: true
+- name: Configure Hashicorp key
+  become: yes
+  apt_key: url="https://apt.releases.hashicorp.com/gpg" state=present
+
+- name: Configure Hashicorp repository
+  become: yes
+  apt_repository: repo="deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main" state=present
+
+- name: Install Terraform
+  become: yes
+  apt:
+    name: terraform
+    update_cache: yes
 
 #################################
 ########Docker installation######
@@ -149,7 +156,7 @@
     dest: /usr/local/bin/docker-compose
     mode: +x
 
-- name: add user {{ ansible_user }} to docker group
+- name: add user "{{ ansible_user }}" to docker group
   become: yes
   user:
     name: "{{ ansible_user }}"
@@ -173,6 +180,13 @@
   get_url:
     url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
     dest: /usr/local/bin/minikube
+    mode: +x
+
+- name: Install docker driver for kvm
+  become: yes
+  get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-kvm2
+    dest: /usr/local/bin/docker-machine-driver-kvm2
     mode: +x
 
 - name: Make kvm2 the default driver for minikube
